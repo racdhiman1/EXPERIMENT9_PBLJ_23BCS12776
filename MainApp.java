@@ -1,26 +1,20 @@
-package com.cu.partb;
-
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import java.util.List;
+package com.cu.partc;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class MainApp {
     public static void main(String[] args) {
-        Session session = HibernateUtil.getSessionFactory().openSession();
-        Transaction tx = session.beginTransaction();
-
-        // CREATE
-        Student s1 = new Student("Rohit Kumar", "rohit@example.com", "B.Tech CSE");
-        session.save(s1);
-
-        tx.commit();
-
-        // READ
-        List<Student> students = session.createQuery("from Student", Student.class).list();
-        System.out.println("All Students:");
-        students.forEach(System.out::println);
-
-        session.close();
-        HibernateUtil.shutdown();
+        var ctx = new AnnotationConfigApplicationContext(AppConfig.class);
+        AccountDAO dao = ctx.getBean(AccountDAO.class);
+        // create two accounts if not present
+        if (dao.find(101) == null) dao.save(new Account(101, "Alice", 10000));
+        if (dao.find(102) == null) dao.save(new Account(102, "Bob", 2000));
+        BankService svc = ctx.getBean(BankService.class);
+        try {
+            svc.transfer(101, 102, 3000);
+            System.out.println("Transfer success");
+        } catch (Exception e) {
+            System.out.println("Transfer failed: " + e.getMessage());
+        }
+        ctx.close();
     }
 }
